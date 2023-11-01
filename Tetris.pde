@@ -18,7 +18,7 @@ void settings() {
 void setup() {
     frameRate(30);
     gen_new_figure();
-    handling_event(x, y);
+    handling_event(x, y, figure_rotate);
     randomSeed(System.currentTimeMillis() / 1000L);
     tmr = millis();
 }
@@ -43,7 +43,7 @@ void draw() {
 void timerStuff() {
     if (millis() - tmr > (1000 / SPEED)) {
         tmr = millis();
-        handling_event_falling(x, y + 1);
+        handling_event_falling(x, y + 1, figure_rotate);
         if (!fallen) {
             return;
         }
@@ -57,7 +57,7 @@ void timerStuff() {
         fallen = false;
         check_line_on_clear();
         gen_new_figure();
-        handling_event(x, y);
+        handling_event(x, y, figure_rotate);
     }
 }
 
@@ -100,9 +100,9 @@ void check_line_on_clear() {
 }
 
 // Falling / Moving figure handling
-void handling_event_falling(int new_x, int new_y) {
+void handling_event_falling(int new_x, int new_y, int new_figure_rotate) {
     boolean result = figure_indexing((tx, ty, ix, iy) -> {
-        if (figures[figure_id][figure_rotate][iy].charAt(ix) == empty) {
+        if (figures[figure_id][new_figure_rotate][iy].charAt(ix) == empty) {
             return true;
         }
         if (tx < 0 || tx >= WIDTH) {
@@ -117,16 +117,16 @@ void handling_event_falling(int new_x, int new_y) {
     if (!result) {
         return;
     }
-    handling_event(new_x, new_y);
+    handling_event(new_x, new_y, new_figure_rotate);
 }
 
 // return true only if success
-boolean handling_event(int new_x, int new_y) {
+boolean handling_event(int new_x, int new_y, int new_figure_rotate) {
     if (fallen) {
         return false;
     }
     boolean result = figure_indexing((tx, ty, ix, iy) -> {
-        if (figures[figure_id][figure_rotate][iy].charAt(ix) == empty) {
+        if (figures[figure_id][new_figure_rotate][iy].charAt(ix) == empty) {
             return true;
         }
         if (tx < 0 || tx >= WIDTH || fallen_board[tx][ty] || (board[tx][ty] != cur_color && board[tx][ty] != 0)) {
@@ -139,6 +139,7 @@ boolean handling_event(int new_x, int new_y) {
     }
     prev_x = x;
     prev_y = y;
+    prev_rotate = figure_rotate;
     if (!need_for_clean) {
         need_for_clean = true;
     } else {
@@ -152,6 +153,7 @@ boolean handling_event(int new_x, int new_y) {
     }
     x = new_x;
     y = new_y;
+    figure_rotate = new_figure_rotate;
     figure_indexing((tx, ty, ix, iy) -> {
         if (figures[figure_id][figure_rotate][iy].charAt(ix) == empty) {
             return true;
@@ -185,27 +187,20 @@ void keyPressed() {
 }
 
 void left_pressed() {
-    handling_event(x - 1, y);
+    handling_event(x - 1, y, figure_rotate);
 }
 
 void right_pressed() {
-    handling_event(x + 1, y);
+    handling_event(x + 1, y, figure_rotate);
 }
 
 void up_pressed() {
-    // int prev_rotate_id = figure_rotate;
-    // figure_rotate = (figure_rotate + 1) % figures[figure_id].length;
-    // handling_event_falling(x, y);
-    // if (fallen) {
-    //     fallen = false;
-    //     figure_rotate = prev_rotate_id;
-    // } else {
-    //     prev_rotate = prev_rotate_id;
-    // }
+    int new_rotate = (figure_rotate + 1) % figures[figure_id].length;
+    handling_event_falling(x, y, new_rotate);
 }
 
 void down_pressed() {
-    handling_event_falling(x, y + 1);
+    handling_event_falling(x, y + 1, figure_rotate);
 }
 
 void instant_fall() {
