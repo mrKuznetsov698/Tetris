@@ -27,6 +27,7 @@ int x;
 int y;
 int prev_x;
 int prev_y;
+boolean paused = true;
 boolean need_for_clean = false;
 color cur_color;
 int prev_rotate;
@@ -41,7 +42,7 @@ void draw() {
 }
 
 void timerStuff() {
-    if (millis() - tmr > (1000 / SPEED)) {
+    if (!paused && millis() - tmr > (1000 / SPEED)) {
         tmr = millis();
         handling_event_falling(x, y + 1, figure_rotate);
         if (!fallen) {
@@ -101,6 +102,9 @@ void check_line_on_clear() {
 
 // Falling / Moving figure handling
 void handling_event_falling(int new_x, int new_y, int new_figure_rotate) {
+    if (paused) {
+      return;
+    }
     boolean result = figure_indexing((tx, ty, ix, iy) -> {
         if (figures[figure_id][new_figure_rotate][iy].charAt(ix) == empty) {
             return true;
@@ -121,9 +125,9 @@ void handling_event_falling(int new_x, int new_y, int new_figure_rotate) {
 }
 
 // return true only if success
-boolean handling_event(int new_x, int new_y, int new_figure_rotate) {
-    if (fallen) {
-        return false;
+void handling_event(int new_x, int new_y, int new_figure_rotate) {
+    if (fallen || paused) {
+        return;
     }
     boolean result = figure_indexing((tx, ty, ix, iy) -> {
         if (figures[figure_id][new_figure_rotate][iy].charAt(ix) == empty) {
@@ -135,7 +139,7 @@ boolean handling_event(int new_x, int new_y, int new_figure_rotate) {
         return true;
     }, new_x, new_y);
     if (!result) {
-        return false;
+        return;
     }
     prev_x = x;
     prev_y = y;
@@ -161,7 +165,7 @@ boolean handling_event(int new_x, int new_y, int new_figure_rotate) {
         board[tx][ty] = cur_color;
         return true;
     }, new_x, new_y);
-    return true;
+    return;
 }
 
 // Keyboard events
@@ -183,7 +187,17 @@ void keyPressed() {
     case ' ':
         //instant_fall();
         break;
+    case ENTER:
+        // pause
+        pauseGame();
+        break;
     }
+}
+
+void pauseGame() {
+  //background(100, 100, 100, 0.5);
+  paused = !paused;
+  println(paused);
 }
 
 void left_pressed() {
